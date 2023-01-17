@@ -1,4 +1,5 @@
-filepath = "C:\Users\rtdea\Documents\UCI\cs211A-VisualComputing\img-gallery\flowergray.jpg";
+% replace this with your own filepath
+filepath = "<path>\<to>\img-gallery\<some_image>jpg";
 A = imread(filepath);
 img_dbl = im2double(A);
 
