@@ -42,22 +42,12 @@ subsampled = img_dbl(v,v)
 % combinations of parameters of the Gaussian Filter and compare the results. 
 % filter = fspecial('gaussian',3,0.5)
 which fspecial
-filter = fspecial('gaussian',[3,3],3);
+filter = fspecial('gaussian',[5,5],1);
 blurred = imfilter(img_dbl,filter)
-figure, imshow(A)
-figure, imshow(blurred)
+%imshow(A)
+%imshow(blurred)
+montage(A,blurred)
 
 % h. Apply the conv2 instead of imfilter function to the same process (for one Gaussian Filter), do 
 % you see any changes? Why? 
-
-
-
-%% 
-% def apply_filter(img,filter):
-%   smaller_img = apply_filter(img,filter)
-%   save(interp2(image, original_size)
-% 
-
-
-
 
