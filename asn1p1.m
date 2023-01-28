@@ -8,19 +8,22 @@ imagefiles = [
 
 for imagefile = 1: length(imagefiles)
 %     curimagefile = load(strcat(d,imagefile.name));
-    curImg = imagefiles(imagefile)
+    curImgPath = imagefiles(imagefile)
     orig = imread(curImg);
     img_dbl = im2double(orig);
     images = {1,2,3,4,5,6,7,8};
-    N = size(img_dbl,1)
+    original_size = size(img_dbl);
     smaller = img_dbl;
     images{1} = img_dbl;
     imageNum = 1;
+
+    N = original_size(1);
     while N > 2
         imageNum = imageNum + 1
         convolved = conv2(smaller,[1,1;1,1], 'valid');
         smaller = convolved(1:2:end,1:2:end)/4;
-        resized = imresize(smaller,imageNum);
+        resized = imresize(smaller,original_size);
+        figure, imshow(resized)
         images{imageNum} = resized;
         N = size(smaller,1);
     end
