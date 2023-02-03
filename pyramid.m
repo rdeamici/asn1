@@ -1,24 +1,18 @@
-function [images] = pyramid(path)
-    orig = imread(path);
-    img_dbl = im2double(orig);
-    images = cell(1,9);
+function [images] = pyramid(img_dbl)
+%     images = cell(1,9);
+    images = cell(1,8);
     original_size = size(img_dbl);
-    smaller = img_dbl;
-    images{1} = img_dbl;
+    curImg = img_dbl;
+%     images{1} = img_dbl;
     imageNum = 1;
 
     N = original_size(1);
-    while N > 2
+    while N > 1
+        convolved = conv2(curImg,[.25,.25;.25,.25], 'valid');
+        curImg = convolved(1:2:end,1:2:end);
+%         curImg = imresize(curImg,{[.25,.25;.25,.25],4})
+        images{imageNum} = curImg;
         imageNum = imageNum + 1;
-        convolved = conv2(smaller,[1,1;1,1], 'valid');
-        smaller = convolved(1:2:end,1:2:end)/4;
-        resized = imresize(smaller,original_size);
-        images{imageNum} = resized;
-        N = size(smaller,1);
+        N = size(curImg,1);
     end
-
-    convolved = conv2(smaller,[1,1;1,1], 'valid');
-    final_pixel = convolved(1:2:end,1:2:end)/4;
-    final_image = ones(256)*final_pixel;
-    images{9} = final_image;
 end
