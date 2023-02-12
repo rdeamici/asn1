@@ -1,11 +1,11 @@
 function laplacianPyramid = laplacian(gaussianPyr)
-    laplacianPyramid = cell(size(gaussianPyr)-1);
-    levels = numel(gaussianPyr);
-    for p = 1:levels-1
-        cur = gaussianPyr{p};
-        N = size(cur,1);
-
+length(gaussianPyr)
+    laplacianPyramid = cell(length(gaussianPyr)-1);
+    lapLevels = length(laplacianPyramid);
+    for p = 1:lapLevels
+        larger = gaussianPyr{p};
         smaller = gaussianPyr{p+1};
-        resized = imresize(smaller,2,'bilinear');
-        laplacianPyramid{p} = cur - resized(1:N,1:N,:);
+        resized = resize_level(larger, smaller);
+        laplacianPyramid{p} = larger - resized;
+        size(laplacianPyramid{p})
     end
