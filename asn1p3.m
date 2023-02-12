@@ -1,3 +1,6 @@
+close all;
+clc;
+clear;
 imagefiles = [
         "C:\Users\rtdea\Documents\UCI\cs211A-VisualComputing\asn1\img-gallery\CARTOON.jpg";
         "C:\Users\rtdea\Documents\UCI\cs211A-VisualComputing\asn1\img-gallery\flowergray.jpg";
@@ -5,64 +8,93 @@ imagefiles = [
         "C:\Users\rtdea\Documents\UCI\cs211A-VisualComputing\asn1\img-gallery\polarcities.jpg";
         "C:\Users\rtdea\Documents\UCI\cs211A-VisualComputing\asn1\img-gallery\text.jpg"
         ];
-laplacianOperator = [-.125 -.125 -.125; -.125 1 -.125; -.125 -.125 -.125];
-% class(laplacianOperator)
 
-secondOrderDervs = cell(1,8);
-% step 1
-for i = 1: length(imagefiles)
-    curImgPath = imagefiles(i);
-    orig = imread(curImgPath);
-    img_dbl = im2double(orig);
-    origSize = size(img_dbl);
-    gaussianPyramid = pyramid(img_dbl);
-    outputs = cell(1,numel(gaussianPyramid)-2);
-    for level = 1: length(gaussianPyramid)-2
-        image = gaussianPyramid{level};
-%         class(image)
-        convolved = conv2(image,laplacianOperator, 'valid');
-        secondDerivative = convolved(1:3:end,1:3:end);
-        secondOrderDervs{level} = secondDerivative;
-        % step 2
-        segmented = secondDerivative;
-        segmented(segmented>0) = 1;
-        segmented(segmented<0) = 0;
-        % step 3
-        shiftLeft = segmented.*circshift(segmented,-1,2);
-        shiftRight = segmented.*circshift(segmented,1,2);
-        shiftUp = segmented.*circshift(segmented,1,1);
-        shiftDown = segmented.*circshift(segmented,-1,1);
-        shiftUpLeft = segmented.*circshift(segmented,[1,-1]);
-        shiftUpRight = segmented.*circshift(segmented,[1,1]);
-        shiftdownLeft = segmented.*circshift(segmented,[-1,-1]);
-        shiftdownRight = segmented.*circshift(segmented,[-1,1]);
-        zeroCrossingsShifted = shiftLeft+shiftRight+shiftUp+shiftDown+shiftUpLeft+shiftUpRight+shiftdownLeft+shiftdownRight;
-%         zeroCrossingsShifted = shiftLeft+shiftRight+shiftUp+shiftDown;
-        zeroCrossingsShifted(zeroCrossingsShifted>1) = 1;
-        % step 4: Calculate the local variance and mark it as an edge pixel if this
-        % value is greater than a certain threshold.
-        sz = 3;
-        mn = floor(sz/2);
-        output = zeros(size(segmented));
-        padded = padarray(segmented,[mn mn]);
-                
-        for i=1:size(padded,1)-mn*2
-            for j=1:size(padded,2)-mn*2
-                tmp = padded(i:i+(sz-1),j:j+(sz-1));
-                mu = mean(tmp(:));
-                tmp2 = mean(tmp(:).^2);
-                output(i,j)=tmp2 - mu.^2;
-            end
-        end
-        output = output.*zeroCrossingsShifted;
-        output(output > .23) = 1;
-        output(output <= .23) = 0;
-        outputs{level} = imresize(output,origSize, 'bilinear');
-    end
-    for i = 1 : length(outputs)
-        figure, imshow(outputs{i});
-    end
-%     combined = montage(outputs);
-    %     imsave(combined)
-%     figure, imshow(combined)
+
+% step 1 generate 2nd order derivative images using provided laplacian
+% operator
+laplacianOperator = [-1/8 -1/8 -1/8; -1/8 1 -1/8; -1/8 -1/8 -1/8];
+
+i = 2; % change this to use the different imageFiles
+curImgPath = imagefiles(i);
+img = imread(curImgPath);
+img_dbl = im2double(img);
+N = size(img_dbl,1);
+
+gaussianPyramid = getGaussianPyramid(img_dbl);
+for i = 2 : length(gaussianPyramid)
+    subplot(2,4,i-1), imshow(imresize(gaussianPyramid{i}, [N N], 'bilinear'));
+    title('gaussian pyramid');
 end
+
+secondOrders = cell(8);
+variances = cell(8);
+segmenteds = cell(8);
+zeroCrossings = cell(8);
+
+% generate 2nd order Images
+% skip original image 
+for level = 2: length(gaussianPyramid)
+    gImg = gaussianPyramid{level};
+    secondOrder = imfilter(gImg,laplacianOperator);
+%     figure, imshow(secondOrder)
+    secondOrders{level-1} = secondOrder;
+end
+% for i = 1 : length(secondOrders) - 1
+%     subplot(2,4,i), imshow(imresize(secondOrders{i}, [N N], 'bilinear'));
+%     title('second order derivatives');
+% end
+% figure, montage(secondOrders,'Size',[2 4]);
+% title('second order derivatves');
+
+% step 2 segment 2nd Order images
+for level = 1: length(secondOrders)
+    segmented = secondOrders{level};
+    segmented(segmented>0) = 1;
+    segmented(segmented<0) = 0;
+    segmenteds{level} = segmented;
+end
+% whos segmenteds
+% for i = 1 : length(segmenteds) - 1
+%     subplot(2,4,i), imshow(imresize(segmenteds{i}, [N N], 'bilinear'));
+%     title('2nd order derivative segmented');
+% end
+% figure, montage(segmenteds, 'Size',[2 4]);
+% title('2nd order images segmented');
+
+% step 3 detect zero crossings
+for level = 1: length(segmenteds)
+    segIm = segmenteds{level};
+    zeroCrossing = findZeroCrossings(segIm);
+    zeroCrossings{level} = zeroCrossing;
+end
+% for i = 1 : length(zeroCrossings) - 1
+%     subplot(2,4,i), imshow(imresize(zeroCrossings{i}, [N N], 'bilinear'));
+%     title('zero crossings');
+% %     title('2nd order derivative segmented');
+% end
+% endfigure, montage(zeroCrossings,'Size', [2 4])
+% title('zero crossings');
+
+% step 4: Calculate the local variance and mark it as an edge pixel if this
+% value is greater than a certain threshold.
+edgeImages = cell(length(gaussianPyramid));
+thresholds = [.0015 .002 .004 .005 .007 .006 .002 .002];
+
+for level = 1: length(zeroCrossings)
+    secondOrder = secondOrders{level};
+    zeroCrossing = zeroCrossings{level};
+    variance = calculateVariance(secondOrder);
+    edgeImg = variance.*zeroCrossing;
+    m = max(max(edgeImg))
+    thresh = thresholds(level)
+    edgeImg(edgeImg > thresh) = 1;
+    edgeImg(edgeImg < thresh) = 0;
+    edgeImages{level} = edgeImg;
+end
+% display results
+figure, montage(edgeImages,'Size',[2 4]);
+title('final output');
+% for i = 1 : length(edgeImages) - 1
+%     subplot(2,4,i), imshow(imresize(edgeImages{i}, [N N], 'bilinear'), []);
+%     title('final output');
+% end

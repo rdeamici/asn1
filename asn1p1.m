@@ -1,3 +1,6 @@
+clc;
+clear all;
+close all;
 imagefiles = [
         "C:\Users\rtdea\Documents\UCI\cs211A-VisualComputing\asn1\img-gallery\CARTOON.jpg";
         "C:\Users\rtdea\Documents\UCI\cs211A-VisualComputing\asn1\img-gallery\flowergray.jpg";
@@ -10,12 +13,13 @@ for i = 1: length(imagefiles)
     orig = imread(imagefiles(i));
     img_dbl = im2double(orig);
     origSize = size(img_dbl);
-
-
-    images = pyramid(img_dbl);
-    for i=1:length(images)
-        images{i} = imresize(images{i},origSize, 'bilinear');
+    pyr = getGaussianPyramid(img_dbl);
+    size(pyr);
+    for i = 1:length(pyr)
+        cur = pyr{i};
+        pyr{i} = imresize(cur, origSize, 'bilinear');
+%         subplot(3,3,i), imshow(pyr{i});
     end
-    combined = montage(images);
-%     imsave(combined);
+    figure, montage(pyr(2:end), 'Size',[2 4])
+    %     imshow(combined);
 end

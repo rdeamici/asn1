@@ -1,58 +1,69 @@
+clc;
+clear all;
+
 imagefiles = [
-%         "C:\Users\rtdea\Documents\UCI\cs211A-VisualComputing\asn1\img-gallery\CARTOON.jpg";
+        "C:\Users\rtdea\Documents\UCI\cs211A-VisualComputing\asn1\img-gallery\CARTOON.jpg";
         "C:\Users\rtdea\Documents\UCI\cs211A-VisualComputing\asn1\img-gallery\flowergray.jpg";
-%         "C:\Users\rtdea\Documents\UCI\cs211A-VisualComputing\asn1\img-gallery\kitty.jpg";
+        "C:\Users\rtdea\Documents\UCI\cs211A-VisualComputing\asn1\img-gallery\kitty.jpg";
         "C:\Users\rtdea\Documents\UCI\cs211A-VisualComputing\asn1\img-gallery\polarcities.jpg"
-%         "C:\Users\rtdea\Documents\UCI\cs211A-VisualComputing\asn1\img-gallery\text.jpg"
+        "C:\Users\rtdea\Documents\UCI\cs211A-VisualComputing\asn1\img-gallery\text.jpg"
         ];
 
 %  step 1: laplacian pyramids for 2 images
-leftImagePath = imagefiles(1);
+leftImagePath = imagefiles(2);
 leftOrig = imread(leftImagePath);
-class(leftOrig)
 leftImg_dbl = im2double(leftOrig);
-leftGaussPyr = pyramid(leftImg_dbl);
+leftGaussPyr = getGaussianPyramid(leftImg_dbl);
 
-rightImagePath = imagefiles(2);
+rightImagePath = imagefiles(4);
 rightOrig = imread(rightImagePath);
 rightImg_dbl = im2double(rightOrig);
-rightGaussPyr = pyramid(rightImg_dbl);
+
+rightGaussPyr = getGaussianPyramid(rightImg_dbl);
 
 leftLaplacian = laplacian(leftGaussPyr);
+whos leftLaplacian
 rightLaplacian = laplacian(rightGaussPyr);
 
 % step 2: create binary mask
 origSize = size(im2double(imread(leftImagePath)),1);
-mask = zeros(origSize,origSize);
-mask(1:origSize/2,:,:) = 1;
-% size(mask)
+mask = double(zeros(origSize));
+mask(:,1:origSize/2) = 1;
+% maskGaussPyr = getGaussianPyramid(mask);
+mask = double(zeros(2));
+mask(:,1) = 1;
 
 % step 3: gaussian pyramid for above mask
-maskGaussPyr = pyramid(mask);
-% maskGaussPyr{8}(1,:)
+cur = mask;
+levels = log2(origSize)+1;
+maskGaussPyr = cell(9);
+maskGaussPyr{9} = cur;
+for i = 1:levels-1
+    cur = impyramid(cur, 'expand');
+    cur = vertcat(cur, cur(size(cur,1),:));
+    zc = zeros(size(cur,1),1);
+    cur = [cur,zc];
+    maskGaussPyr{levels-i} = cur;
+    size(cur)
+    if i < 3
+        cur
+        fliplr(cur)
+    end
+end
+% 
 
 % step 4: create laplacian Pyramid by linear interpolation of 
 %         left and right laplacian pyramids
-newLaplacian = cell(1,7);
-
-numel(leftLaplacian)
-numel(rightLaplacian)
-numel(maskGaussPyr)
-
+newLaplacian = cell(length(leftLaplacian));
+blendedImage = zeros(origSize);
 for level = 1: length(leftLaplacian)
-    combined = (maskGaussPyr{level}.*leftLaplacian{level}) + ((1-maskGaussPyr{level}).*rightLaplacian{level});
+    size(maskGaussPyr{level})
+    size(leftLaplacian{level})
+    combined = (maskGaussPyr{level+1}.*leftLaplacian{level}) + ((1-maskGaussPyr{level+1}).*rightLaplacian{level});
+%     combined = (maskGaussPyr{level}.*leftLaplacian{level}) + ((1-maskGaussPyr{level}).*rightLaplacian{level});
+    combined = imresize(combined,[origSize origSize],'bilinear');
     newLaplacian{level} = combined;
-%     figure, imshow(combined)
+    blendedImage = blendedImage+combined;
 end
 
-final_result = newLaplacian{end};
-% size(final_result)
-% figure, imshow(final_result)
-lvls = numel(newLaplacian);
-for k = (lvls - 1): -1: 1
-    nextLvl = newLaplacian{k};
-    N = size(nextLvl,1);
-    final_result = imresize(final_result,2,'bilinear');
-    final_result = final_result(1:N,1:N,:) + nextLvl;
-end
-imwrite(final_result,"flowerCities.png");
+imshow(blendedImage, []);
