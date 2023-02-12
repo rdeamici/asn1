@@ -62,28 +62,22 @@ title('zero crossings');
 % step 4: Calculate the local variance and mark it as an edge pixel if this
 % value is greater than a certain threshold.
 edgeImages = cell(length(gaussianPyramid));
-threshold = .245;
+threshold = .003;
 for level = 1: length(zeroCrossings)
-    segmented = segmenteds{level};
+    secondOrder = secondOrders{level};
     zeroCrossing = zeroCrossings{level};
-    variance = calculateVariance(segmented);
+    variance = calculateVariance(secondOrder);
+    max(max(variance))
     edgeImg = variance.*zeroCrossing;
-    edgeImg(edgeImg>threshold) = 1;
-    edgeImg(edgeImg<threshold) = 0;
-%     for row = 1: N
-%         for col = 1: N
-%             output(row,col) = 0;
-%             if secondOrder(row,col) == 1 && variance(row,col) > threshold
-%                 output(row,col) = 1;
-%             end
-%         end
-%     end
+    
+    edgeImg(edgeImg  > threshold) = 1;
+    edgeImg(edgeImg <= threshold) = 0;
     edgeImages{level} = edgeImg;
 end
 % display results
-figure, montage(edgeImages,'Size',[2 4]);
-title('final output');
-% for i = 1 : length(edgeImages)
-%     subplot(4,2,i), imshow(edgeImages{i});
-%     title('final output');
-% end
+% figure, montage(edgeImages,'Size',[2 4]);
+% title('final output');
+for i = 1 : length(edgeImages)
+    figure, imshow(imresize(edgeImages{i}, [N N], 'bilinear'));
+    title('final output');
+end

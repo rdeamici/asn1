@@ -20,6 +20,6 @@ for i = 1: length(imagefiles)
         pyr{i} = imresize(cur, origSize, 'bilinear');
 %         subplot(3,3,i), imshow(pyr{i});
     end
-    figure, montage(pyr, 'Size',[3 3])
+    figure, montage(pyr(2:end), 'Size',[2 4])
     %     imshow(combined);
 end

@@ -1,15 +1,14 @@
-function variance = calculateVariance(segmented)
+function localVar = calculateVariance(segmented)
+    % local variance is defined as E[X^2] - E[X]^2
+    % define a 3x3 window the calculate local
+    % variance around each pixel
     sz = 3;
-    mn = floor(sz/2);
-    variance = zeros(size(segmented));
-    padded = padarray(segmented,[mn mn]);
-            
-    for i=1:size(padded,1)-mn*2
-        for j=1:size(padded,2)-mn*2
-            tmp = padded(i:i+(sz-1),j:j+(sz-1));
-            mu = mean(tmp(:));
-            tmp2 = mean(tmp(:).^2);
-            variance(i,j)=tmp2 - mu.^2;
-        end
-    end
+    window = ones(sz)/sz.^2;
+
+    % calculate local means E[X]
+    mu = conv2(segmented, window, 'same');
+    % calculate local means of squares E[X^2]
+    II = conv2(segmented.^2, window, 'same');
+    % calculate local variance E[X^2] - E[X]^2
+    localVar = II-(mu.^2);
 end
